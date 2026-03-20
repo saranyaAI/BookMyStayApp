@@ -1,66 +1,56 @@
-import java.util.HashMap;
-import java.util.Map;
-
-// Room class to store room details
+import java.util.*;
 class Room {
-    int beds;
-    int size;
-    double price;
-    int available;
-
-    public Room(int beds, int size, double price, int available) {
-        this.beds = beds;
-        this.size = size;
+    String name;
+    String city;
+    int price;
+    // Constructor
+    Room(String name, String city, int price) {
+        this.name = name;
+        this.city = city;
         this.price = price;
-        this.available = available;
     }
 }
-
-// Inventory class
-class RoomInventory {
-
-    private HashMap<String, Room> inventory;
-
-    public RoomInventory() {
-        inventory = new HashMap<>();
-    }
-
-    // Register room with details
-    public void registerRoomType(String type, Room room) {
-        inventory.put(type, room);
-    }
-
-    // Display formatted inventory
-    public void displayInventory() {
-        System.out.println("Hotel Room Inventory Status\n");
-
-        for (Map.Entry<String, Room> entry : inventory.entrySet()) {
-
-            String type = entry.getKey();
-            Room room = entry.getValue();
-
-            System.out.println(type + " Room:");
-            System.out.println("Beds: " + room.beds);
-            System.out.println("Size: " + room.size + " sqft");
-            System.out.println("Price per night: " + room.price);
-            System.out.println("Available Rooms: " + room.available);
-            System.out.println();
-        }
-    }
-}
-
 public class BookMyStayApp {
-
     public static void main(String[] args) {
 
-        RoomInventory inventory = new RoomInventory();
+        Scanner sc = new Scanner(System.in);
 
-        // Add room types with details
-        inventory.registerRoomType("Single", new Room(1, 250, 1500.0, 5));
-        inventory.registerRoomType("Double", new Room(2, 400, 2500.0, 3));
-        inventory.registerRoomType("Suite", new Room(3, 750, 5000.0, 2));
+        // Sample room data
+        ArrayList<Room> rooms = new ArrayList<>();
+        rooms.add(new Room("Central Hotel", "New York", 150));
+        rooms.add(new Room("Park Inn", "New York", 180));
+        rooms.add(new Room("City Lodge", "New York", 120));
+        rooms.add(new Room("Sea View", "Los Angeles", 250));
+        rooms.add(new Room("Hill Stay", "Chicago", 100));
 
-        // Display inventory
-        inventory.displayInventory();
+        System.out.println("Welcome to the Room Search Application");
+
+        // User input
+        System.out.print("Enter the city to search rooms: ");
+        String city = sc.nextLine();
+
+        System.out.print("Enter maximum price: ");
+        int maxPrice = sc.nextInt();
+
+        System.out.println("\nSearching for rooms in " + city + " under $" + maxPrice + "...");
+        System.out.println("Available Rooms:");
+
+        boolean found = false;
+
+        // Search logic
+        for (Room r : rooms) {
+            if (r.city.equalsIgnoreCase(city) && r.price <= maxPrice) {
+                System.out.println("Room: " + r.name + ", Price: $" + r.price);
+                found = true;
+            }
+        }
+
+        if (!found) {
+            System.out.println("No rooms found.");
+        }
+
+        System.out.println("\nSearch complete.");
+
+        sc.close();
     }
 }
