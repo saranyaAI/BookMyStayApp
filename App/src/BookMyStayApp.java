@@ -1,15 +1,26 @@
 import java.util.*;
 
-// Booking Request class
-class BookingRequest {
-    String customerName;
-    String roomType;
-    int nights;
+// Room class
+class Room {
+    int roomId;
+    String type;
+    boolean isAvailable;
 
-    BookingRequest(String customerName, String roomType, int nights) {
+    Room(int roomId, String type, boolean isAvailable) {
+        this.roomId = roomId;
+        this.type = type;
+        this.isAvailable = isAvailable;
+    }
+}
+
+// Booking class
+class Booking {
+    String customerName;
+    String requiredType;
+
+    Booking(String customerName, String requiredType) {
         this.customerName = customerName;
-        this.roomType = roomType;
-        this.nights = nights;
+        this.requiredType = requiredType;
     }
 }
 
@@ -19,47 +30,65 @@ public class BookMyStayApp {
 
         Scanner sc = new Scanner(System.in);
 
-        // Queue to store booking requests
-        Queue<BookingRequest> queue = new LinkedList<>();
+        // Sample rooms
+        List<Room> rooms = new ArrayList<>();
+        rooms.add(new Room(101, "Standard", true));
+        rooms.add(new Room(102, "Deluxe", true));
+        rooms.add(new Room(103, "Suite", true));
+        rooms.add(new Room(104, "Standard", true));
+        rooms.add(new Room(105, "Deluxe", true));
 
-        System.out.println("Welcome to Booking Request Queue System");
+        // Queue for booking requests
+        Queue<Booking> bookings = new LinkedList<>();
 
-        // Taking number of requests
+        System.out.println("Welcome to Room Allocation Service");
+
+        // Input number of bookings
         System.out.print("Enter number of booking requests: ");
         int n = sc.nextInt();
-        sc.nextLine(); // consume newline
+        sc.nextLine();
 
-        // Input booking requests
+        // Input booking details
         for (int i = 0; i < n; i++) {
-            System.out.println("\nEnter details for request " + (i + 1));
+            System.out.println("\nEnter booking " + (i + 1));
 
             System.out.print("Customer Name: ");
             String name = sc.nextLine();
 
-            System.out.print("Room Type: ");
-            String roomType = sc.nextLine();
+            System.out.print("Required Room Type (Standard/Deluxe/Suite): ");
+            String type = sc.nextLine();
 
-            System.out.print("Number of nights: ");
-            int nights = sc.nextInt();
-            sc.nextLine(); // consume newline
-
-            queue.add(new BookingRequest(name, roomType, nights));
+            bookings.add(new Booking(name, type));
         }
 
-        // Processing booking requests
-        System.out.println("\nProcessing Booking Requests...");
+        // Allocation process
+        System.out.println("\nAllocating Rooms...");
 
-        while (!queue.isEmpty()) {
-            BookingRequest req = queue.poll();
+        while (!bookings.isEmpty()) {
+            Booking b = bookings.poll();
+            boolean allocated = false;
 
-            System.out.println("\nProcessing Request:");
-            System.out.println("Customer: " + req.customerName);
-            System.out.println("Room Type: " + req.roomType);
-            System.out.println("Nights: " + req.nights);
-            System.out.println("Status: Booking Confirmed");
+            for (Room r : rooms) {
+                if (r.isAvailable && r.type.equalsIgnoreCase(b.requiredType)) {
+                    r.isAvailable = false;
+
+                    System.out.println("\nBooking Confirmed!");
+                    System.out.println("Customer: " + b.customerName);
+                    System.out.println("Room ID: " + r.roomId);
+                    System.out.println("Room Type: " + r.type);
+
+                    allocated = true;
+                    break;
+                }
+            }
+
+            if (!allocated) {
+                System.out.println("\nSorry " + b.customerName +
+                        ", No " + b.requiredType + " rooms available.");
+            }
         }
 
-        System.out.println("\nAll booking requests processed.");
+        System.out.println("\nAll bookings processed.");
 
         sc.close();
     }
