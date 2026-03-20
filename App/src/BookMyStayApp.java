@@ -1,55 +1,65 @@
 import java.util.*;
-class Room {
-    String name;
-    String city;
-    int price;
-    // Constructor
-    Room(String name, String city, int price) {
-        this.name = name;
-        this.city = city;
-        this.price = price;
+
+// Booking Request class
+class BookingRequest {
+    String customerName;
+    String roomType;
+    int nights;
+
+    BookingRequest(String customerName, String roomType, int nights) {
+        this.customerName = customerName;
+        this.roomType = roomType;
+        this.nights = nights;
     }
 }
+
 public class BookMyStayApp {
+
     public static void main(String[] args) {
 
         Scanner sc = new Scanner(System.in);
 
-        // Sample room data
-        ArrayList<Room> rooms = new ArrayList<>();
-        rooms.add(new Room("Central Hotel", "New York", 150));
-        rooms.add(new Room("Park Inn", "New York", 180));
-        rooms.add(new Room("City Lodge", "New York", 120));
-        rooms.add(new Room("Sea View", "Los Angeles", 250));
-        rooms.add(new Room("Hill Stay", "Chicago", 100));
+        // Queue to store booking requests
+        Queue<BookingRequest> queue = new LinkedList<>();
 
-        System.out.println("Welcome to the Room Search Application");
+        System.out.println("Welcome to Booking Request Queue System");
 
-        // User input
-        System.out.print("Enter the city to search rooms: ");
-        String city = sc.nextLine();
+        // Taking number of requests
+        System.out.print("Enter number of booking requests: ");
+        int n = sc.nextInt();
+        sc.nextLine(); // consume newline
 
-        System.out.print("Enter maximum price: ");
-        int maxPrice = sc.nextInt();
+        // Input booking requests
+        for (int i = 0; i < n; i++) {
+            System.out.println("\nEnter details for request " + (i + 1));
 
-        System.out.println("\nSearching for rooms in " + city + " under $" + maxPrice + "...");
-        System.out.println("Available Rooms:");
+            System.out.print("Customer Name: ");
+            String name = sc.nextLine();
 
-        boolean found = false;
+            System.out.print("Room Type: ");
+            String roomType = sc.nextLine();
 
-        // Search logic
-        for (Room r : rooms) {
-            if (r.city.equalsIgnoreCase(city) && r.price <= maxPrice) {
-                System.out.println("Room: " + r.name + ", Price: $" + r.price);
-                found = true;
-            }
+            System.out.print("Number of nights: ");
+            int nights = sc.nextInt();
+            sc.nextLine(); // consume newline
+
+            queue.add(new BookingRequest(name, roomType, nights));
         }
 
-        if (!found) {
-            System.out.println("No rooms found.");
+        // Processing booking requests
+        System.out.println("\nProcessing Booking Requests...");
+
+        while (!queue.isEmpty()) {
+            BookingRequest req = queue.poll();
+
+            System.out.println("\nProcessing Request:");
+            System.out.println("Customer: " + req.customerName);
+            System.out.println("Room Type: " + req.roomType);
+            System.out.println("Nights: " + req.nights);
+            System.out.println("Status: Booking Confirmed");
         }
 
-        System.out.println("\nSearch complete.");
+        System.out.println("\nAll booking requests processed.");
 
         sc.close();
     }
