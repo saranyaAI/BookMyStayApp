@@ -1,37 +1,21 @@
 import java.util.*;
 
-// Custom Exception
-class BookingException extends Exception {
-    public BookingException(String message) {
-        super(message);
-    }
-}
-
-// Reservation class
-class Reservation {
-    String reservationId;
+// Booking Request
+class BookingRequest {
     String customerName;
     String roomType;
 
-    public Reservation(String reservationId, String customerName, String roomType) {
-        this.reservationId = reservationId;
+    public BookingRequest(String customerName, String roomType) {
         this.customerName = customerName;
         this.roomType = roomType;
     }
-
-    public void display() {
-        System.out.println("Reservation ID: " + reservationId +
-                ", Name: " + customerName +
-                ", Room: " + roomType);
-    }
 }
 
-// Booking System
+// Thread-safe Booking System
 class BookingSystem {
 
     private Map<String, Integer> inventory = new HashMap<>();
-    private Map<String, Reservation> bookings = new HashMap<>();
-    private Stack<String> rollbackStack = new Stack<>();
+    private Queue<BookingRequest> requestQueue = new LinkedList<>();
 
     public BookingSystem() {
         inventory.put("Standard", 2);
@@ -39,85 +23,101 @@ class BookingSystem {
         inventory.put("Suite", 1);
     }
 
-    // Booking
-    public void bookRoom(String id, String name, String roomType) throws BookingException {
-
-        if (!inventory.containsKey(roomType)) {
-            throw new BookingException("Invalid room type");
-        }
-
-        if (inventory.get(roomType) <= 0) {
-            throw new BookingException("No rooms available");
-        }
-
-        Reservation res = new Reservation(id, name, roomType);
-        bookings.put(id, res);
-
-        inventory.put(roomType, inventory.get(roomType) - 1);
-
-        System.out.println("Booking successful:");
-        res.display();
+    // Add request (synchronized queue access)
+    public synchronized void addRequest(BookingRequest request) {
+        requestQueue.add(request);
+        System.out.println("Request added: " + request.customerName + " -> " + request.roomType);
     }
 
-    // Cancellation with rollback
-    public void cancelBooking(String reservationId) throws BookingException {
+    // Process booking (critical section)
+    public synchronized void processBooking() {
 
-        if (!bookings.containsKey(reservationId)) {
-            throw new BookingException("Reservation not found or already cancelled");
+        if (requestQueue.isEmpty()) {
+            return;
         }
 
-        Reservation res = bookings.get(reservationId);
+        BookingRequest req = requestQueue.poll();
 
-        // Push to stack (LIFO rollback)
-        rollbackStack.push(reservationId);
+        if (!inventory.containsKey(req.roomType)) {
+            System.out.println("Invalid room type for " + req.customerName);
+            return;
+        }
 
-        // Restore inventory
-        String roomType = res.roomType;
-        inventory.put(roomType, inventory.get(roomType) + 1);
+        int available = inventory.get(req.roomType);
 
-        // Remove booking
-        bookings.remove(reservationId);
+        if (available > 0) {
+            // Critical section (protected)
+            inventory.put(req.roomType, available - 1);
 
-        System.out.println("Booking cancelled successfully: " + reservationId);
+            System.out.println(Thread.currentThread().getName() +
+                    " booked " + req.roomType +
+                    " for " + req.customerName);
+        } else {
+            System.out.println(Thread.currentThread().getName() +
+                    " failed (No rooms) for " + req.customerName);
+        }
     }
 
-    // Show inventory
     public void showInventory() {
-        System.out.println("\nCurrent Inventory:");
+        System.out.println("\nFinal Inventory:");
         for (String type : inventory.keySet()) {
             System.out.println(type + ": " + inventory.get(type));
         }
     }
+}
 
-    // Show rollback stack
-    public void showRollbackStack() {
-        System.out.println("\nRollback Stack (Recent cancellations): " + rollbackStack);
+// Worker Thread
+class BookingWorker extends Thread {
+
+    private BookingSystem system;
+
+    public BookingWorker(BookingSystem system, String name) {
+        super(name);
+        this.system = system;
+    }
+
+    public void run() {
+        for (int i = 0; i < 3; i++) {
+            system.processBooking();
+            try {
+                Thread.sleep(100); // simulate delay
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }
 
-// Main class
+// Main Class
 public class BookMyStayApp {
 
     public static void main(String[] args) {
 
         BookingSystem system = new BookingSystem();
 
+        // Add booking requests
+        system.addRequest(new BookingRequest("Saranya", "Deluxe"));
+        system.addRequest(new BookingRequest("Rahul", "Deluxe"));
+        system.addRequest(new BookingRequest("Anu", "Suite"));
+        system.addRequest(new BookingRequest("John", "Suite")); // should fail
+        system.addRequest(new BookingRequest("Mike", "Standard"));
+
+        // Create threads
+        Thread t1 = new BookingWorker(system, "Thread-1");
+        Thread t2 = new BookingWorker(system, "Thread-2");
+
+        // Start threads
+        t1.start();
+        t2.start();
+
+        // Wait for threads to finish
         try {
-            // Book rooms
-            system.bookRoom("R1", "Saranya", "Deluxe");
-            system.bookRoom("R2", "Rahul", "Standard");
-
-            // Cancel booking
-            system.cancelBooking("R1");
-
-            // Invalid cancellation
-            system.cancelBooking("R3");
-
-        } catch (BookingException e) {
-            System.out.println("Error: " + e.getMessage());
+            t1.join();
+            t2.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
 
         system.showInventory();
-        system.showRollbackStack();
     }
 }
